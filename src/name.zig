@@ -419,8 +419,11 @@ pub const NamePool = struct {
                                 name_length += label.len;
                             const end_index = packet_index + name_length;
 
+                            logger.debug("Packet start, offset, end - {},{},{}", .{ start_index, packet_offset, end_index });
                             if (start_index <= packet_offset and packet_offset <= end_index) {
                                 maybe_referenced_name = held_name;
+                            } else {
+                                logger.debug("INVALID! Packet start, offset, end - {},{},{}", .{ start_index, packet_offset, end_index });
                             }
                         }
 

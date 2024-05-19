@@ -314,12 +314,23 @@ pub const ResourceData = union(Type) {
                 };
             },
             .TXT => blk: {
-                const length = try reader.readIntBig(u8);
-                if (length > 256) return error.Overflow;
+                const length = opaque_resource_data.data.len;
 
                 if (options.allocator) |allocator| {
-                    var text = try allocator.alloc(u8, length);
+
+                    // The first byte of the response is the size of the first chunk
+                    // This will be discarded.
+                    var chunk_size: u8 = try reader.readByte();
+                    var text = try allocator.alloc(u8, length - 1);
+                    errdefer allocator.free(text);
                     _ = try reader.read(text);
+
+                    var next: usize = chunk_size;
+                    while (next < text.len) {
+                        chunk_size = text[next];
+                        text[next] = '\n';
+                        next += chunk_size + 1;
+                    }
 
                     break :blk ResourceData{ .TXT = text };
                 } else {
